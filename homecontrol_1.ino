@@ -94,7 +94,7 @@ void setup() {
   mySwitch.enableReceive(RECEIVER_PIN);
  
   // Optional set pulse length.
-  mySwitch.setPulseLength(350);  
+ //mySwitch.setPulseLength(350);  
 
 
 
@@ -152,9 +152,11 @@ void switchWirelessOutlet(int number){
   
   int numberStk = number % 5;  
   if (numberStk == 0) numberStk = 5;
+  if (numberStk < 0) numberStk = numberStk*(-1);
   
-  int numberStkIT = (number-144) % 4;
+  int numberStkIT = (number-50) % 4;
   if (numberStkIT == 0) numberStkIT = 4;
+  if (numberStkIT < 0) numberStkIT = numberStkIT*(-1);
 
   if (number > 0){ 
     //Intertechno Logik
@@ -189,6 +191,11 @@ void switchWirelessOutlet(int number){
     } else if (number > 66){
       mySwitch.switchOn('b',((((number-66)-1)/4)+1), numberStkIT);  
     } else if (number > 50){
+      Serial.print("RC Switch: ");
+      Serial.print(((((number-50)-1)/4)+1));
+      Serial.print(" - ");
+      Serial.println(numberStkIT);
+
       mySwitch.switchOn('a',((((number-50)-1)/4)+1), numberStkIT);  
     }else{
       //Standard Logik
@@ -228,6 +235,11 @@ void switchWirelessOutlet(int number){
     } else if (number > 66){
       mySwitch.switchOff('b',((((number-66)-1)/4)+1), numberStkIT);  
     } else if (number > 50){
+      Serial.print("RC Switch: ");
+      Serial.print(((((number-50)-1)/4)+1));
+      Serial.print(" - ");
+      Serial.println(numberStkIT);
+
       mySwitch.switchOff('a',((((number-50)-1)/4)+1), numberStkIT);  
     } else {
       //Standard Logik
@@ -480,4 +492,3 @@ char* int2bin(unsigned int x)
   buffer[68] ='\0';
   return buffer;
 }
-
