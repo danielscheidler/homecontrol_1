@@ -77,7 +77,7 @@ boolean resetSytem = false;
  */
 void setup() {
   unsigned char mac[]  = {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED  };
-  unsigned char ip[]   = { 192, 168, 1, 12 };
+  unsigned char ip[]   = { 192, 168, 1, 13 };
   unsigned char dns[]  = { 192, 168, 1, 1  };
   unsigned char gate[] = { 192, 168, 1, 1  };
   unsigned char mask[] = { 255, 255, 255, 0  };
@@ -191,11 +191,6 @@ void switchWirelessOutlet(int number){
     } else if (number > 66){
       mySwitch.switchOn('b',((((number-66)-1)/4)+1), numberStkIT);  
     } else if (number > 50){
-      Serial.print("RC Switch: ");
-      Serial.print(((((number-50)-1)/4)+1));
-      Serial.print(" - ");
-      Serial.println(numberStkIT);
-
       mySwitch.switchOn('a',((((number-50)-1)/4)+1), numberStkIT);  
     }else{
       //Standard Logik
@@ -235,11 +230,6 @@ void switchWirelessOutlet(int number){
     } else if (number > 66){
       mySwitch.switchOff('b',((((number-66)-1)/4)+1), numberStkIT);  
     } else if (number > 50){
-      Serial.print("RC Switch: ");
-      Serial.print(((((number-50)-1)/4)+1));
-      Serial.print(" - ");
-      Serial.println(numberStkIT);
-
       mySwitch.switchOff('a',((((number-50)-1)/4)+1), numberStkIT);  
     } else {
       //Standard Logik
@@ -320,7 +310,6 @@ void  runRawCmdWebpage(EthernetClient client, char* HttpFrame){
     return;
   }
 
-
   showHead(client);
   
   client.println(F(  "<h4>Manuelle Schaltung</h4><br/>"
@@ -329,27 +318,17 @@ void  runRawCmdWebpage(EthernetClient client, char* HttpFrame){
   client.println(F( "<b>Anschluss: </b>" 
                     "<select name=\"schalte\" size=\"1\" > "));
   
-  client.println(F( "  <option value=\"1\">Anschluss 1</option>"
-                    "  <option value=\"2\">Anschluss 2</option>"
-                    "  <option value=\"3\">Anschluss 3</option>"
-                    "  <option value=\"4\">Anschluss 4</option>"
-                    "  <option value=\"5\">Anschluss 5</option>"
-                    "  <option value=\"6\">Anschluss 6</option>"
-                    "  <option value=\"7\">Anschluss 7</option>"
-                    "  <option value=\"8\">Anschluss 8</option>"
-                    "  <option value=\"9\">Anschluss 9</option>"
-                    "  <option value=\"10\">Anschluss 10</option>"
-                    "  <option value=\"11\">Anschluss 11</option>"
-                    "  <option value=\"12\">Anschluss 12</option>"
-                    "  <option value=\"13\">Anschluss 13</option>"
-                    "  <option value=\"14\">Anschluss 14</option>"
-                    "  <option value=\"15\">Anschluss 15</option>"
-                    "  <option value=\"16\">Anschluss 16</option>"));
-                    
-  client.println(F( "</select>" ));
+  for(int i=0; i<=200;i++){
+    client.print(F( "  <option value=\""));
+    client.print(i); 
+    client.print(F( "\">Anschluss "));
+    client.print(i);
+    client.println(F( "</option>"));
+  }
 
-  client.println(F("<input type='submit' value='Abschicken'/>"
-                   "</form>"));
+  client.println(F( "</select>" ));
+  client.println(F( "<input type='submit' value='Abschicken'/>"
+                    "</form>"));
 
   showFooter(client);
 }
@@ -357,7 +336,20 @@ void  runRawCmdWebpage(EthernetClient client, char* HttpFrame){
 
 void postRawCmd(EthernetClient client, char* anschluss){
   showHead(client);
-  
+    
+  client.println(F(  "<h4>Manuelle Schaltung durchfuehren</h4><br/>"
+                     "<form action='/rawCmd'><br>"));
+
+  client.print(F( "<b>Anschluss </b>"));
+
+  if(atoi(anschluss)>0){
+    client.print(anschluss);
+    client.print(F( " wird aktiviert "));
+  } else if(atoi(anschluss)<0){ 
+    client.print(atoi(anschluss)*-1);
+    client.print(F( " wird deaktiviert "));    
+  }
+
   switchWirelessOutlet(atoi(anschluss));
   
   showFooter(client);
@@ -373,7 +365,8 @@ void postRawCmd(EthernetClient client, char* anschluss){
 
 void showHead(EthernetClient client){
   client.println(htmlHeader);
-
+  client.print("IP: ");
+  client.println(Ethernet.localIP());
   client.println(htmlHead);
 }
 
@@ -402,8 +395,7 @@ void initStrings(){
     "<hr><h2>HomeControl</h2><hr>") ;
     
     htmlFooter = F( "</center>"
-    "<a  style=\"position: absolute;left: 30px; bottom: 20px; \"  href=\"/\">Zur&uuml;ck zum Hauptmen&uuml;</a>"
-    "<span style=\"position: absolute;right: 30px; bottom: 20px; \">Entwickelt von Daniel Scheidler und Julian Theis</span>"
+    "<a  style=\"position: absolute;left: 30px; bottom: 20px; \"  href=\"/\">Zurueck zum Hauptmenue;</a>"
     "</body></html>");
     
 }
@@ -420,12 +412,16 @@ char* readFromClient(EthernetClient client){
   char paramName[20];
   char paramValue[20];
   char pageName[20];
+  
   if (client) {
+  
     while (client.connected()) {
+  
       if (client.available()) {
         memset(buffer,0, sizeof(buffer)); // clear the buffer
 
         client.find("/");
+        
         if(byte bytesReceived = client.readBytesUntil(' ', buffer, sizeof(buffer))){ 
           buffer[bytesReceived] = '\0';
 
@@ -435,10 +431,9 @@ char* readFromClient(EthernetClient client){
           if(strcmp(buffer, "favicon.ico\0")){
             char* paramsTmp = strtok(buffer, " ?=&/\r\n");
             int cnt = 0;
+            
             while (paramsTmp) {
-              //Serial.print(F("Read: "));
-              //Serial.println(paramsTmp);
-              
+            
               switch (cnt) {
                 case 0:
                   strcpy(pageName, paramsTmp);
@@ -462,7 +457,6 @@ char* readFromClient(EthernetClient client){
               cnt=cnt==0?1:cnt==1?2:1;
             }
           }
-    
         }
       }// end if Client available
       break;
