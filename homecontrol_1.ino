@@ -77,7 +77,7 @@ boolean resetSytem = false;
  */
 void setup() {
   unsigned char mac[]  = {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED  };
-  unsigned char ip[]   = { 192, 168, 1, 13 };
+  unsigned char ip[]   = { 192, 168, 1, 12 };
   unsigned char dns[]  = { 192, 168, 1, 1  };
   unsigned char gate[] = { 192, 168, 1, 1  };
   unsigned char mask[] = { 255, 255, 255, 0  };
